@@ -44,5 +44,6 @@ func (d *Dispatcher) DispatchPending() error {
 	if len(ids) == 0 {
 		return nil
 	}
-	return nil
+	_, err := d.dispatch.AssignBatch(ids)
+	return err
 }
