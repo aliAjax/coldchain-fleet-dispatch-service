@@ -8,27 +8,32 @@ import (
 	"github.com/example/coldchain-fleet-dispatch-service/internal/domain"
 )
 
-func TestConcurrentListAndUpdate(t *testing.T) {
+func TestStoreListUpdateNoRace(t *testing.T) {
 	st := New()
 	_ = st.SaveShipment(domain.Shipment{ID: "ship-1", Status: domain.ShipmentPending})
 	_ = st.SaveAlert(domain.Alert{ID: "alert-1", ShipmentID: "ship-1"})
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		for i := 0; i < 2000; i++ {
-			_ = st.ListShipments()
-			_ = st.ListAlerts()
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		for i := 0; i < 2000; i++ {
-			_, _ = st.UpdateShipmentStatus("ship-1", domain.ShipmentPending)
-			_ = st.SaveAlert(domain.Alert{ID: fmt.Sprintf("alert-%d", i), ShipmentID: "ship-1"})
-		}
-	}()
+	start := make(chan struct{})
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			<-start
+			if i%2 == 0 {
+				for j := 0; j < 2000; j++ {
+					_ = st.ListShipments()
+					_ = st.ListAlerts()
+				}
+			} else {
+				for j := 0; j < 2000; j++ {
+					_, _ = st.UpdateShipmentStatus("ship-1", domain.ShipmentPending)
+					_ = st.SaveAlert(domain.Alert{ID: fmt.Sprintf("alert-%d", j), ShipmentID: "ship-1"})
+				}
+			}
+		}(i)
+	}
+	close(start)
 	wg.Wait()
 }
 

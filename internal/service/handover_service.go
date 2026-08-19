@@ -62,7 +62,7 @@ func (h *HandoverService) findAssignment(shipmentID string) (domain.Assignment, 
 }
 
 // FinalizeDeliveredBatch releases every vehicle whose assignment is delivered.
-// It intentionally uses a helper so each release happens before the next one.
+// It uses a helper so each release happens before the next one.
 func (h *HandoverService) FinalizeDeliveredBatch() (int, error) {
 	released := 0
 	for _, a := range h.store.ListAssignments() {
