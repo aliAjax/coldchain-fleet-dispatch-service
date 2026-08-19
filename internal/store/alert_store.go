@@ -39,11 +39,14 @@ func (s *Store) SaveAlert(a domain.Alert) error {
 }
 
 func (s *Store) ListAlerts() []domain.Alert {
-	snapshot := make([]domain.Alert, 0, len(s.alerts))
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]domain.Alert, 0, len(s.alerts))
 	for _, a := range s.alerts {
-		snapshot = append(snapshot, a)
+		out = append(out, a)
 	}
-	return snapshot
+	sort.Slice(out, func(i, j int) bool { return out[i].CreatedAt.Before(out[j].CreatedAt) })
+	return out
 }
 
 func (s *Store) ResolveAlert(id string) (domain.Alert, error) {

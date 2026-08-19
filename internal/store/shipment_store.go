@@ -1,6 +1,8 @@
 package store
 
 import (
+	"sort"
+
 	"github.com/example/coldchain-fleet-dispatch-service/internal/domain"
 	"github.com/example/coldchain-fleet-dispatch-service/internal/platform"
 )
@@ -26,11 +28,14 @@ func (s *Store) GetShipment(id string) (domain.Shipment, error) {
 }
 
 func (s *Store) ListShipments() []domain.Shipment {
-	snapshot := make([]domain.Shipment, 0, len(s.shipments))
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]domain.Shipment, 0, len(s.shipments))
 	for _, sh := range s.shipments {
-		snapshot = append(snapshot, sh)
+		out = append(out, sh)
 	}
-	return snapshot
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
 }
 
 func (s *Store) UpdateShipmentStatus(id string, status domain.ShipmentStatus) (domain.Shipment, error) {
