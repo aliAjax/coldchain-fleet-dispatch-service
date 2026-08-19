@@ -39,6 +39,8 @@ func (s *Store) SaveAlert(a domain.Alert) error {
 }
 
 func (s *Store) ListAlerts() []domain.Alert {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	snapshot := make([]domain.Alert, 0, len(s.alerts))
 	for _, a := range s.alerts {
 		snapshot = append(snapshot, a)

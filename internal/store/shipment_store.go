@@ -26,6 +26,8 @@ func (s *Store) GetShipment(id string) (domain.Shipment, error) {
 }
 
 func (s *Store) ListShipments() []domain.Shipment {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	snapshot := make([]domain.Shipment, 0, len(s.shipments))
 	for _, sh := range s.shipments {
 		snapshot = append(snapshot, sh)
