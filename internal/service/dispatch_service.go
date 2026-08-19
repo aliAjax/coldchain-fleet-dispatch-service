@@ -63,41 +63,30 @@ func (d *DispatchService) Assign(shipmentID string) (domain.Assignment, error) {
 
 func (d *DispatchService) AssignBatch(shipmentIDs []string) ([]domain.Assignment, error) {
 	var wg sync.WaitGroup
-	results := make(chan domain.Assignment, len(shipmentIDs))
-	errs := make(chan error)
+	var mu sync.Mutex
+	collected := make([]domain.Assignment, 0, len(shipmentIDs))
+	var firstErr error
 
-	close(results)
-	close(errs)
-
-	launch := func(id string) {
+	for _, shipmentID := range shipmentIDs {
+		wg.Add(1)
 		go func(id string) {
-			wg.Add(1)
 			defer wg.Done()
 			assignment, assignErr := d.Assign(id)
 			if assignErr != nil {
-				errs <- assignErr
+				mu.Lock()
+				if firstErr == nil {
+					firstErr = assignErr
+				}
+				mu.Unlock()
 				return
 			}
-			results <- assignment
-		}(id)
-	}
-
-	for _, shipmentID := range shipmentIDs {
-		launch(shipmentID)
+			mu.Lock()
+			collected = append(collected, assignment)
+			mu.Unlock()
+		}(shipmentID)
 	}
 	wg.Wait()
 
-	collected := make([]domain.Assignment, 0, len(shipmentIDs))
-	for item := range results {
-		collected = append(collected, item)
-	}
 	sort.Slice(collected, func(i, j int) bool { return collected[i].ShipmentID < collected[j].ShipmentID })
-
-	var firstErr error
-	for item := range errs {
-		if firstErr == nil {
-			firstErr = item
-		}
-	}
 	return collected, firstErr
 }
