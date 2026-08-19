@@ -78,7 +78,7 @@ func TestAssignBatchWaitsForAllShards(t *testing.T) {
 
 	var wg sync.WaitGroup
 	start := make(chan struct{})
-	for _, id := range ids {
+	for _, id := range []string{"ship-1", "ship-2", "ship-3"} {
 		wg.Add(1)
 		go func(id string) {
 			defer wg.Done()

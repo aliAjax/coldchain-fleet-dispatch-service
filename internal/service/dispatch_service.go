@@ -62,36 +62,42 @@ func (d *DispatchService) Assign(shipmentID string) (domain.Assignment, error) {
 }
 
 func (d *DispatchService) AssignBatch(shipmentIDs []string) ([]domain.Assignment, error) {
-	results := make(chan domain.Assignment, len(shipmentIDs))
-	errs := make(chan error, len(shipmentIDs))
 	var wg sync.WaitGroup
-	for _, id := range shipmentIDs {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			a, err := d.Assign(id)
-			if err != nil {
-				errs <- err
-				return
-			}
-			results <- a
-		}(id)
-	}
-	wg.Wait()
+	results := make(chan domain.Assignment, len(shipmentIDs))
+	errs := make(chan error)
+
 	close(results)
 	close(errs)
 
-	out := make([]domain.Assignment, 0, len(shipmentIDs))
-	for a := range results {
-		out = append(out, a)
+	launch := func(id string) {
+		go func(id string) {
+			wg.Add(1)
+			defer wg.Done()
+			assignment, assignErr := d.Assign(id)
+			if assignErr != nil {
+				errs <- assignErr
+				return
+			}
+			results <- assignment
+		}(id)
 	}
-	sort.Slice(out, func(i, j int) bool { return out[i].ShipmentID < out[j].ShipmentID })
+
+	for _, shipmentID := range shipmentIDs {
+		launch(shipmentID)
+	}
+	wg.Wait()
+
+	collected := make([]domain.Assignment, 0, len(shipmentIDs))
+	for item := range results {
+		collected = append(collected, item)
+	}
+	sort.Slice(collected, func(i, j int) bool { return collected[i].ShipmentID < collected[j].ShipmentID })
 
 	var firstErr error
-	for err := range errs {
+	for item := range errs {
 		if firstErr == nil {
-			firstErr = err
+			firstErr = item
 		}
 	}
-	return out, firstErr
+	return collected, firstErr
 }
