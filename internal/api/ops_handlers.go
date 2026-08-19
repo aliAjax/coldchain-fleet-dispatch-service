@@ -72,7 +72,7 @@ func (a *API) handleBuildChecklist(w http.ResponseWriter, r *http.Request) {
 	}
 	checklist, err := a.checklists.Build(req.AssignmentID)
 	if err != nil {
-		writeAPIError(w, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, checklist)
@@ -86,7 +86,7 @@ func (a *API) handleMarkChecklist(w http.ResponseWriter, r *http.Request) {
 	}
 	checklist, err := a.checklists.Mark(r.PathValue("assignmentID"), req.Key, req.Done)
 	if err != nil {
-		writeAPIError(w, err)
+		writeError(w, http.StatusInternalServerError, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, checklist)

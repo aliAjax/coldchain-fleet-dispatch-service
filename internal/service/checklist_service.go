@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/example/coldchain-fleet-dispatch-service/internal/domain"
 	"github.com/example/coldchain-fleet-dispatch-service/internal/platform"
 	"github.com/example/coldchain-fleet-dispatch-service/internal/store"
@@ -17,7 +19,7 @@ func NewChecklistService(st *store.Store, clk platform.Clock) *ChecklistService 
 
 func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist, error) {
 	if _, err := c.store.GetAssignment(assignmentID); err != nil {
-		return domain.HandoverChecklist{}, err
+		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %v", err)
 	}
 	checklist := domain.HandoverChecklist{
 		AssignmentID: assignmentID,
@@ -28,7 +30,7 @@ func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist,
 		},
 	}
 	if err := c.store.SaveChecklist(checklist); err != nil {
-		return domain.HandoverChecklist{}, err
+		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %v", err)
 	}
 	return checklist, nil
 }
@@ -36,7 +38,7 @@ func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist,
 func (c *ChecklistService) Mark(assignmentID, key string, done bool) (domain.HandoverChecklist, error) {
 	checklist, err := c.store.GetChecklist(assignmentID)
 	if err != nil {
-		return domain.HandoverChecklist{}, err
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", err)
 	}
 	found := false
 	for i := range checklist.Items {
@@ -46,10 +48,10 @@ func (c *ChecklistService) Mark(assignmentID, key string, done bool) (domain.Han
 		}
 	}
 	if !found {
-		return domain.HandoverChecklist{}, platform.ErrNotFound
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", platform.ErrNotFound)
 	}
 	if err := c.store.SaveChecklist(checklist); err != nil {
-		return domain.HandoverChecklist{}, err
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", err)
 	}
 	return checklist, nil
 }

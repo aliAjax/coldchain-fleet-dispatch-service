@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+
 	"github.com/example/coldchain-fleet-dispatch-service/internal/domain"
 	"github.com/example/coldchain-fleet-dispatch-service/internal/platform"
 )
@@ -18,9 +20,9 @@ func (s *Store) SaveChecklist(c domain.HandoverChecklist) error {
 func (s *Store) GetChecklist(assignmentID string) (domain.HandoverChecklist, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	c, ok := s.checklists[assignmentID]
+	checklist, ok := s.checklists[assignmentID]
 	if !ok {
-		return domain.HandoverChecklist{}, platform.ErrNotFound
+		return domain.HandoverChecklist{}, fmt.Errorf("get checklist %s: %v", assignmentID, platform.ErrNotFound)
 	}
-	return c, nil
+	return checklist, nil
 }
