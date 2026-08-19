@@ -19,7 +19,7 @@ func NewChecklistService(st *store.Store, clk platform.Clock) *ChecklistService 
 
 func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist, error) {
 	if _, err := c.store.GetAssignment(assignmentID); err != nil {
-		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %v", err)
+		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %w", err)
 	}
 	checklist := domain.HandoverChecklist{
 		AssignmentID: assignmentID,
@@ -30,7 +30,7 @@ func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist,
 		},
 	}
 	if err := c.store.SaveChecklist(checklist); err != nil {
-		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %v", err)
+		return domain.HandoverChecklist{}, fmt.Errorf("build checklist: %w", err)
 	}
 	return checklist, nil
 }
@@ -38,7 +38,7 @@ func (c *ChecklistService) Build(assignmentID string) (domain.HandoverChecklist,
 func (c *ChecklistService) Mark(assignmentID, key string, done bool) (domain.HandoverChecklist, error) {
 	checklist, err := c.store.GetChecklist(assignmentID)
 	if err != nil {
-		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", err)
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %w", err)
 	}
 	found := false
 	for i := range checklist.Items {
@@ -48,10 +48,10 @@ func (c *ChecklistService) Mark(assignmentID, key string, done bool) (domain.Han
 		}
 	}
 	if !found {
-		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", platform.ErrNotFound)
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %w", platform.ErrNotFound)
 	}
 	if err := c.store.SaveChecklist(checklist); err != nil {
-		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %v", err)
+		return domain.HandoverChecklist{}, fmt.Errorf("mark checklist: %w", err)
 	}
 	return checklist, nil
 }

@@ -22,7 +22,7 @@ func (s *Store) GetChecklist(assignmentID string) (domain.HandoverChecklist, err
 	defer s.mu.RUnlock()
 	checklist, ok := s.checklists[assignmentID]
 	if !ok {
-		return domain.HandoverChecklist{}, fmt.Errorf("get checklist %s: %v", assignmentID, platform.ErrNotFound)
+		return domain.HandoverChecklist{}, fmt.Errorf("get checklist %s: %w", assignmentID, platform.ErrNotFound)
 	}
 	return checklist, nil
 }
